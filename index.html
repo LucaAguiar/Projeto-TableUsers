@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Teste-Axios(Vue)</title>
+        <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css" />
+        <link
+            type="text/css"
+            rel="stylesheet"
+            href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+        <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <style>
+            * {
+                font-family: system-ui;
+            }
+            body {
+                padding: 20px;
+            }
+            table {
+                display: flex;
+                justify-content: center;
+            }
+            th,
+            td {
+                padding: 3px;
+                border-style: solid;
+                border-width: 1px;
+            }
+            #app {
+                display: flex;
+            }
+            #add,
+            #remove {
+                background-color: #337733;
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                padding: 8px;
+            }
+            #add:hover,
+            #remove:hover {
+                background-color: #319431;
+                cursor: pointer;
+            }
+            #remove {
+                background-color: #b92020;
+                padding: 3px;
+            }
+            #remove:hover {
+                background-color: #d82e2e;
+            }
+            #newUser {
+                width: 350px;
+                margin-left: 30px;
+                margin-top: 100px;
+            }
+            fieldset {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 20px;
+            }
+            input {
+                outline: none;
+                margin-top: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <div>
+                <div class="overflow-auto">
+                    <b-pagination
+                        v-model="pagination.currentPage"
+                        :total-rows="pagination.totalRows"
+                        :per-page="pagination.perPage"
+                        aria-controls="my-table"
+                        align="center"
+                    ></b-pagination>
+                    <h3>Quantidade: {{ users.length }} usuários</h3>
+                    <table>
+                        <tr>
+                            <th>Id:</th>
+                            <th>Name:</th>
+                            <th>E-mail:</th>
+                            <th>Gender:</th>
+                            <th>Status:</th>
+                            <th></th>
+                        </tr>
+                        <tr v-for="(user, index) in users" :key="index">
+                            <td>{{user.id}}</td>
+                            <td>{{user.name}}</td>
+                            <td>{{user.email}}</td>
+                            <td>{{user.gender}}</td>
+                            <td>{{user.status}}</td>
+                            <td>
+                                <button id="remove" @click="removeUserClick(user, index)">D</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <br />
+            </div>
+            <div id="newUser">
+                <fieldset>
+                    <input v-model="user.id" type="text" placeholder="Id:" /> <br />
+                    <input v-model="user.name" type="text" placeholder="Name:" /> <br />
+                    <input v-model="user.email" type="text" placeholder="E-mail:" /> <br />
+                    <input v-model="user.gender" type="text" placeholder="Gender:" /> <br />
+                    <input v-model="user.status" type="text" placeholder="Status:" /> <br />
+                    <button id="add" @click="addUserClick()">+ Add user</button>
+                </fieldset>
+            </div>
+        </div>
+    </body>
+    <script>
+        new Vue({
+            el: "#app",
+            data() {
+                return {
+                    accessToken: "8620bf1688e80512c2b3f86fa73ece232d79fae5c173d7bd58cea7ad6885b403",
+                    user: {
+                        id: null,
+                        name: null,
+                        email: null,
+                        gender: null,
+                        status: null,
+                    },
+                    pagination: {
+                        perPage: null,
+                        totalRows: null,
+                        currentPage: null,
+                    },
+                    users: [],
+                };
+            },
+            methods: {
+                listUsers: function (page) {
+                    axios.get(`https://gorest.co.in/public/v2/users?page=${page}`).then((response) => {
+                        this.users = response.data;
+                        this.pagination.perPage = response.headers["x-pagination-limit"];
+                        this.pagination.totalRows = response.headers["x-pagination-total"];
+                    });
+                },
+                addUserClick: function () {
+                    axios
+                        .post(`https://gorest.co.in/public/v2/users?access-token=${this.accessToken}`, this.user)
+                        .then((response) => {
+                            this.users.push(this.user);
+                        })
+                        .catch((error) => {
+                            alert(error.response.data);
+                        });
+                },
+                removeUserClick: function (user, index) {
+                    axios
+                        .delete(`https://gorest.co.in/public/v2/users/${user.id}?access-token=${this.accessToken}`)
+                        .then((response) => {
+                            this.users.splice(index, 1);
+                        })
+                        .catch((error) => {
+                            alert(error.response.data);
+                        });
+                },
+            },
+            watch: {
+                "pagination.currentPage": function (page) {
+                    this.listUsers(page);
+                },
+            },
+            mounted() {
+                this.listUsers(1);
+            },
+        });
+    </script>
+</html>
